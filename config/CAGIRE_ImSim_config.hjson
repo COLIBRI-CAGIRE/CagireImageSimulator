@@ -23,7 +23,7 @@
 
 #Used if object_type='spectrum' you have to specifiy directory and name of the file
 #Reads a file with 2 columns: wavelength (in angstrom) / Flux in erg/cm2/s/A
-"object_folder": data/test
+"object_folder": test
 "object_file": bohlin2006_Vega.dat
 
 #Used if etc_type='time' or 'snr' and object_type='magnitude'
@@ -90,7 +90,7 @@
 
 ########### IMAGE SIMULATOR #####################
 
-#input sources (path starts at IS/data/catalog/)
+#input sources (path starts at IS/catalog/)
 "SourcesList": {
   "generate": {
        "RA": 260
@@ -99,7 +99,7 @@
        "catalog": II/246
        "frame": icrs
        
-   }  
+   }
 }
 
 "SourcesToAdd": {
@@ -107,12 +107,11 @@
        "RA": 159.303172
        "DEC": 33.6
        "listeMAG":[13]
-       
    }  
 }
 
 
-# For all PSFs path starts at IS/data/psf/
+# For all PSFs path starts at IS/psf/
 "PSF": {
    "atmosphere": {
       "type": moffat
@@ -133,14 +132,14 @@
 
 
 #PSF file to use
-#"PSFfile" : /data/psf/oversampled_psf/zemax_moffat_128_J_ideal_s07.fits
+#"PSFfile" : /psf/oversampled_psf/zemax_moffat_128_J_ideal_s07.fits
 # we must precise the oversapmling of the PSF / image to simulate
 #g: 15/1.496=10.0267  / z: 15/2.704=5.5473   H:18/3.064=5.8747
 #r: 15/(8*0.384)=4.8828     / i: 15/(8*0.384)=4.8828   / J: 18/(8*0.384)=5.8594
 "psfoversampling" : 1
 
-#name of the output file (path starts at ImSimpy/data/images/)
-"output" : CAGIRE_saturation_test/image.fits
+#name of the output file (path starts at output/)
+"output" : image.fits
 "nom" : nom 
 "nomPersistance" : GRB_90423_test_persistance_persistance.fits
 
@@ -161,15 +160,15 @@
 
 #add cosmetics?
 "cosmetics" : yes
-# Path starts at ImSimpy/data/Cosmetics/
-"DeadPixFile" : CAGIRE_saturation/cold.fits
+# Path starts at ImSimpy/Cosmetics/
+"DeadPixFile" : cold.fits
 #CAGIRE_saturation/DeadPixs_vis.fits
 
 
 #add cosmic rays?
 "cosmicRays" : yes
 "CosmicsFile" : Cosmics.fits
-#Cosmics_4frames.fits  Cosmics_b.fits
+
 
 # ---- Optional ones -----
 #add sky background?
@@ -195,7 +194,7 @@
 
 #convert to ADU
 "ADU": yes
-"GainMapFile": CAGIRE_saturation_test/Gain_nir.fits
+"GainMapFile": Gain_nir.fits
 
 #Non linearity ?
 "nonlinearity": yes
@@ -218,16 +217,16 @@
 
 #Offset
 "Offset": yes
-# Path starts at ImSimpy/data/Offset/
+# Path starts at ImSimpy/Offset/
 "OffsetFile":offset_1V.fits
 #offset_det4.fits
 #CAGIRE_saturation/Offset_vis.fits
 
 
 #pixels de référence 
-"PixRefFile":data/ref_test.fits
+"PixRefFile":ref_test.fits
 
 #pixels actifs
-"PixActifFile":data/PixViolet.fits
+"PixActifFile":PixViolet.fits
 
 } 

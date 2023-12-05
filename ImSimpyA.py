@@ -645,9 +645,9 @@ class ImageSimulator_UTR():
             from astropy.io import fits
 
             if 'output' in self.information['SourcesList']['generate']:
-                output = self.path + '/data/catalog/' + self.information['SourcesList']['generate']['output']
+                output = self.path + '/catalog/' + self.information['SourcesList']['generate']['output']
             else:
-                output = self.path + '/data/catalog/SourcesCatalog.txt'
+                output = self.path + '/catalog/SourcesCatalog.txt'
             if 'frame' in self.information['SourcesList']['generate']:
                 frame = self.information['SourcesList']['generate']['frame']
             else:
@@ -677,7 +677,7 @@ class ImageSimulator_UTR():
 
 
         elif "file" in self.config['SourcesList']:
-            self.objects = np.loadtxt(self.path + '/data/catalog/' + self.information['SourcesList']['file'])
+            self.objects = np.loadtxt(self.path + '/catalog/' + self.information['SourcesList']['file'])
 
     def AddObjectToList(self,k):
         """Alix :  Créer un catalogue ne contenant que le GRB à simuler  """
@@ -686,9 +686,9 @@ class ImageSimulator_UTR():
             from astropy.io import fits
 
             if 'output' in self.information['SourcesToAdd']['gen']:
-                output = self.path + '/data/catalog/' + self.information['SourcesToAdd']['gen']['output']
+                output = self.path + '/catalog/' + self.information['SourcesToAdd']['gen']['output']
             else:
-                output = self.path + '/data/catalog/SourcesToAdd.txt'
+                output = self.path + '/catalog/SourcesToAdd.txt'
             
             RA = self.information['SourcesToAdd']['gen']['RA']
             DEC = self.information['SourcesToAdd']['gen']['DEC']
@@ -762,7 +762,7 @@ class ImageSimulator_UTR():
             self.objects = self.objects[np.newaxis, :]
 
         # read in object types
-        data = open(self.path + '/data/objects.dat').readlines()
+        data = open(self.path + '/objects.dat').readlines()
 
         # only 2D array will have second dimension, so this will trigger the exception if only one input source
         tmp_ = self.objects.shape[1]
@@ -855,7 +855,7 @@ class ImageSimulator_UTR():
                                 self.information['ysize']))
 
                         PSFUtils.createPSF(
-                            filename=self.path + '/data/psf/' + self.information['PSF'][keyword]['output'],
+                            filename=self.path + '/psf/' + self.information['PSF'][keyword]['output'],
                             PSF_type=self.information['PSF'][keyword]['type'],
                             imsize=self.information['PSF'][keyword]['size'],
                             pixel_size=[self.config['xPixSize'], self.config['yPixSize']],
@@ -863,12 +863,12 @@ class ImageSimulator_UTR():
                             DM1=self.config['D_M1'], DM2=self.config['D_M2'], focal_length=self.config['Focal_length'],
                             oversamp=self.config['psfoversampling'], beta=beta, disp=False, unsigned16bit=False)
 
-                        PSF[keyword] = self.path + '/data/psf/' + self.information['PSF'][keyword]['output']
+                        PSF[keyword] = self.path + '/psf/' + self.information['PSF'][keyword]['output']
 
                     else:
                         # Check pixel size and oversample if needed
                         hdr_ = fits.getheader(
-                            self.path + '/data/psf/' + self.information['PSF'][keyword]['file'] + '.fits')
+                            self.path + '/psf/' + self.information['PSF'][keyword]['file'] + '.fits')
                         try:
                             if hdr_['XPIXELSZ'] != self.information['cameras'][self.information['channel']][
                                 'Photocell_SizeX'] / oversamp or hdr_['YPIXELSZ'] != \
@@ -879,20 +879,20 @@ class ImageSimulator_UTR():
                                                   'Photocell_SizeY'] / oversamp]
 
                                 PSFUtils.resize(
-                                    filename1=self.path + '/data/psf/' + self.information['PSF']['keyword']['file'],
+                                    filename1=self.path + '/psf/' + self.information['PSF']['keyword']['file'],
                                     filename2=self.path +"/"+self.information['PSF']['keyword']['file'] + '_oversammpled',
                                     type='factor', resampling=resampling, overwrite=True, unsigned16bit=False)
 
-                                PSF[keyword] = self.path + '/data/psf/' + self.information['PSF'][keyword][
+                                PSF[keyword] = self.path + '/psf/' + self.information['PSF'][keyword][
                                     'file'] + '_oversampled'
                             else:
-                                PSF[keyword] = self.path + '/data/psf/' + self.information['PSF'][keyword]['file']
+                                PSF[keyword] = self.path + '/psf/' + self.information['PSF'][keyword]['file']
                         except:
-                            PSF[keyword] = self.path + '/data/psf/' + self.information['PSF'][keyword]['file']
+                            PSF[keyword] = self.path + '/psf/' + self.information['PSF'][keyword]['file']
             print('PSF convolution')
             # convolve atmosphere and instrument PSF to get the total PSF
             PSFUtils.convolvePSF(filename1=PSF['atmosphere'], filename2=PSF['instrument'],
-                                 filename3=self.path + '/data/psf/' + self.information['PSF']['total']['file'])
+                                 filename3=self.path + '/psf/' + self.information['PSF']['total']['file'])
             # PSFUtils.convolvePSF(filename1=PSF['instrument'],filename2=PSF['atmosphere'],filename3=self.path+self.information['PSF']['total']['output']+'_oversampled')
             # PSFUtils.resize(filename1=self.path+self.information['PSF']['total']['output']+'_oversampled',filename2=self.path+self.information['PSF']['total']['output'],resampling=32/self.information['psfoversampling'],type='sum')
             # PSFUtils.resize(filename1=self.path+self.information['PSF']['total']['output']+'_oversampled',filename2=self.path+self.information['PSF']['total']['output'],resampling=self.information['psfoversampling']/32,type='zoom')
@@ -910,7 +910,7 @@ class ImageSimulator_UTR():
             sys.exit(-9)
         else:
             # single PSF
-            self.PSF = fits.getdata(self.path + '/data/psf/' + self.information['PSF']['total']['file']).astype(
+            self.PSF = fits.getdata(self.path + '/psf/' + self.information['PSF']['total']['file']).astype(
                 np.float64)
             # Normalise if needed
             if np.sum(self.PSF) != 1: self.PSF /= np.sum(self.PSF)
@@ -1121,8 +1121,8 @@ class ImageSimulator_UTR():
 
     def addCosmetics(self,A):
         """ Add the cosmetics effects """
-        deadPixs = fits.getdata(self.path + '/data/Cosmetics/' + self.information['DeadPixFile'])
-        # HotPixs=fits.getdata(self.path+'/data/Cosmetics/'+self.information['HotPixFile'])
+        deadPixs = fits.getdata(self.path + '/Cosmetics/' + self.information['DeadPixFile'])
+        # HotPixs=fits.getdata(self.path+'/Cosmetics/'+self.information['HotPixFile'])
 
         A *= deadPixs
 
@@ -1137,8 +1137,8 @@ class ImageSimulator_UTR():
 
         if k == Nfin-1:
             nom = self.information['nom'] + '_persistance.fits'
-            path = simu_dir+'/ImSimpyA/data/Persistance/'
-            satu = np.ravel(fits.getdata(self.path + '/data/' + self.information['SaturationFile']))
+            path = simu_dir+'/ImSimpyA/Persistance/'
+            satu = np.ravel(fits.getdata(self.path + '/' + self.information['SaturationFile']))
 
             indPers = np.intersect1d(np.argwhere(np.ndarray.flatten(A) > satu), actif)
             #print('indpers',len(indPers))
@@ -1155,7 +1155,7 @@ class ImageSimulator_UTR():
         """ Application de la carte de persistance à appliquer (exposition précédente) déjà en electrons"""
 
 
-        path = simu_dir+'/ImSimpyA/data/Persistance/'
+        path = simu_dir+'/ImSimpyA/Persistance/'
         nom = self.information['nomPersistance']
         Treset = self.information['Treset']  # 5*60  # temps depuis le premier reset
         
@@ -1169,18 +1169,18 @@ class ImageSimulator_UTR():
         Texp = self.information['exptime']*k + Treset
         
         """ Just replaced fits.open with .getdata. (FF)"""
-        conv = fits.getdata(self.path + '/data/' + self.information['PersistanceConv'])
+        conv = fits.getdata(self.path + '/' + self.information['PersistanceConv'])
         # Replace 0's with 1's
         conv += 1
         
         
-        amp = fits.open(self.path + '/data/' + self.information['PersistanceAmp'])
+        amp = fits.open(self.path + '/' + self.information['PersistanceAmp'])
         amp = amp[0].data
         amp_1 = conv * amp[0]
         amp_2 = conv * amp[1]
         amp_3 = conv * amp[2]
         
-        tau = fits.open(self.path + '/data/' + self.information['PersistanceTau'])
+        tau = fits.open(self.path + '/' + self.information['PersistanceTau'])
         tau = tau[0].data
         tau_1 = conv * tau[0]
         tau_2 = conv * tau[1]
@@ -1217,7 +1217,7 @@ class ImageSimulator_UTR():
         """ Add cosmic rays """
         Texp =  k* 1.33  # temps de l'impact
         Nframe = k
-        cosmic = fits.open(self.path + '/data/Cosmics/' + self.information['CosmicsFile'])
+        cosmic = fits.open(self.path + '/Cosmics/' + self.information['CosmicsFile'])
         pos = (cosmic[1].data).astype(int)
         energie = cosmic[2].data
         temps = (cosmic[3].data).astype(int)
@@ -1238,14 +1238,14 @@ class ImageSimulator_UTR():
 
     def applyVignetting(self):
         """ Add vignetting  """
-        vignetting = fits.getdata(self.path + '/data/Vignetting/' + self.information['VignettingFile'])
+        vignetting = fits.getdata(self.path + '/Vignetting/' + self.information['VignettingFile'])
         self.image *= vignetting
 
     def applyFlatField(self):
         """ Add FlatField  """
 
         # FlatField calculé sur le det ALFA
-        FlatField = fits.getdata(self.path + '/data/' + self.information['FlatFieldFile'])
+        FlatField = fits.getdata(self.path + '/' + self.information['FlatFieldFile'])
 
 
         ref = fits.getdata(self.path +"/"+self.information['PixRefFile'])
@@ -1261,15 +1261,15 @@ class ImageSimulator_UTR():
     def applyNonLinearity(self,k,A):
         """ Add non linearity  """
 
-        NL = fits.getdata(self.path + '/data/NonLinearity/' + self.information['NonLinearityFile'])
+        NL = fits.getdata(self.path + '/NonLinearity/' + self.information['NonLinearityFile'])
 
 
         ref = fits.getdata(self.path +"/"+self.information['PixRefFile'])
         NL = np.ravel(NL)  # sinon pb lors de la correction par les pixels de ref, leur non linéarité ne peux pas être calibrée par illumination : pas sensible light
         NL[ref] = 0
 
-        offset = np.ravel(fits.getdata(self.path + '/data/Offset/' + self.information['OffsetFile']))
-        satu = np.ravel(fits.getdata(self.path + '/data/' + self.information['SaturationFile']))
+        offset = np.ravel(fits.getdata(self.path + '/Offset/' + self.information['OffsetFile']))
+        satu = np.ravel(fits.getdata(self.path + '/' + self.information['SaturationFile']))
         sat = (satu - offset) * 10  # pour mettre en electrons
         im = np.ndarray.flatten(A)
         a = np.argwhere(im*k > sat)
@@ -1292,7 +1292,7 @@ class ImageSimulator_UTR():
         """
         #self.image = 2255 * np.ones([2048, 2048]) * self.information['exptime']  # test d'une illumination constante.
 
-        DC = np.reshape(fits.getdata(self.path + '/data/DarkCurrent/' + self.information['DarkFile']), [2048, 2048])
+        DC = np.reshape(fits.getdata(self.path + '/DarkCurrent/' + self.information['DarkFile']), [2048, 2048])
 
 
         ref = fits.getdata(self.path +"/"+self.information['PixRefFile'])
@@ -1374,7 +1374,7 @@ class ImageSimulator_UTR():
         """
         Convert from electrons to ADUs using the value read from the configuration file.
         """
-        gain_map = fits.getdata(self.path + '/data/GainMap/' + self.information['GainMapFile'])
+        gain_map = fits.getdata(self.path + '/GainMap/' + self.information['GainMapFile'])
 
         A /= gain_map
 
@@ -1384,7 +1384,7 @@ class ImageSimulator_UTR():
         """
         Add the offset (bias) in ADU
         """
-        offset = fits.getdata(self.path + '/data/Offset/' + self.information['OffsetFile'])
+        offset = fits.getdata(self.path + '/Offset/' + self.information['OffsetFile'])
         offset = np.reshape(offset, [2048, 2048])
         #print('max offset', np.max(offset))
         F += offset
@@ -1440,7 +1440,7 @@ class ImageSimulator_UTR():
         """
         # max=self.information['FWC']
         # satu = fits.getdata('/home/alix/Documents/Programmes/Cartes_det4_Pixel_Reset/CarteSaturation_Det4.fits')
-        satu = fits.open(self.path + '/data/' + self.information['SaturationFile'])
+        satu = fits.open(self.path + '/' + self.information['SaturationFile'])
         maxi = np.ravel(satu[1].data)
         # max=120000
 
@@ -1463,7 +1463,7 @@ class ImageSimulator_UTR():
         :type ct: array
         :return: None
         """
-        crosstalk = fits.open(self.path + '/data/' + self.information['CrossTalkFile'])
+        crosstalk = fits.open(self.path + '/' + self.information['CrossTalkFile'])
         ct = np.zeros([3, 3])
         ct[0] = crosstalk[1].data
         ct[1] = crosstalk[2].data
@@ -1472,9 +1472,9 @@ class ImageSimulator_UTR():
         # ct = np.array([[0.0002, 0.002, 0.0002], [0.002, 1-(0.002*4+0.0002*4), 0.002], [0.0002, 0.002, 0.0002]])
 
         # on coupe les valeurs au dela de la saturation pour ne pas générer un cross talk enorme lorsque l'on dépasse de beaucoup la saturation
-        offset = np.ravel(fits.getdata(self.path + '/data/Offset/' + self.information['OffsetFile']))
-        #satu = np.ravel(fits.getdata(simu_dir+'/ImSimpyA/data/saturation_1V.fits'))
-        satu = fits.open(self.path + '/data/' + self.information['SaturationFile'])
+        offset = np.ravel(fits.getdata(self.path + '/Offset/' + self.information['OffsetFile']))
+        #satu = np.ravel(fits.getdata(simu_dir+'/ImSimpyA/saturation_1V.fits'))
+        satu = fits.open(self.path + '/' + self.information['SaturationFile'])
         satu = np.ravel(satu[1].data)
 
         sat = (satu - offset) * 10
@@ -1491,7 +1491,7 @@ class ImageSimulator_UTR():
 
         image = np.ravel(scipy.signal.convolve2d(im, ct, mode='same', boundary='fill'))
 
-        refct = np.loadtxt(simu_dir+'ImSimpyA/data/ref_ct.txt').astype(int)
+        refct = np.loadtxt(simu_dir+'ImSimpyA/ref_ct.txt').astype(int)
         image[refct] = np.ndarray.flatten(im)[refct]
 
         A = np.reshape(image, [2048, 2048])
@@ -1692,7 +1692,7 @@ class ImageSimulator_UTR():
 	"""
         
         
-        satu = fits.open(self.path + '/data/' + self.information['SaturationFile'])
+        satu = fits.open(self.path + '/' + self.information['SaturationFile'])
         satu = np.ravel(satu[1].data)
         if plot:
             plt.figure('rampe')

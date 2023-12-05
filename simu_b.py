@@ -19,7 +19,7 @@ seeing=1
 moonage=7
 band='H'                                     # Photometry band ('J' or 'H' )
 Texp=1.331210                                # Frame duration (s)                / Fixed parameter
-t_rampe =  5 #66.5                          # Ramp duration  (s)
+t_rampe =  5 #66.5                           # Ramp duration  (s)
 RA_image = 214.477                           # Right Ascension                   / Not used if addGRB=True
 DEC_image = -45.411                          # Declination                       / Not used if addGRB=True
 nomrampe=  'my_simulation_1'                 # Base name for the output file
