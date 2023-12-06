@@ -15,27 +15,28 @@ start = time.perf_counter()
 ########################################################################################################################
 # SET SIMULATION PARAMETERS
 ########################################################################################################################
-seeing=1
-moonage=7
+seeing=1                                     # Local seeing                         / [arcsec]
+moonage=7                                    # Days since new moon                  / [d]
 band='H'                                     # Photometry band ('J' or 'H' )
-Texp=1.331210                                # Frame duration (s)                / Fixed parameter
-t_rampe =  5 #66.5                           # Ramp duration  (s)
-RA_image = 214.477                           # Right Ascension                   / Not used if addGRB=True
-DEC_image = -45.411                          # Declination                       / Not used if addGRB=True
-nomrampe=  'my_simulation_1'                 # Base name for the output file
-nomrampe+='_'+band                           # Add photometric band to base name
-nomrampe+='_'+str(int(t_rampe//Texp))+"f"    # Add number of frames to base name
 
-AddGRB = False                               # Simulate a GRB ?
+Texp=1.331210                                # Frame duration                        / [s], Fixed parameter
+t_rampe =  5 #66.5                           # Ramp duration                         / [s]
 
-tdeb_obs = 300                               # If GRB : time of observation after burst alert
-cheminGRB = path+'GRBs/GRB90423_J.txt'       # Path to GRB lightcurve (coordinates and magnitudes with time)
+RA_image = 214.477                           # Right Ascension                       / [deg], Not used if addGRB=True
+DEC_image = -45.411                          # Declination                           / [deg], Not used if addGRB=True
 
-nomPersistance =  'carte_persistance.fits'   # If persitance, name of the file with saturated pixels from previous acquisition
-Treset = 0                                   # Duration between current and previous acquisition (since last reset)
+AddGRB = False                               # Simulate a GRB ?                      / [bool]
+tdeb_obs = 300                               # Time of observation after burst alert / [s]
+cheminGRB = path+'GRBs/GRB90423_'+band+'.txt'# Path to GRB lightcurve (coordinates and magnitudes with time)
 
+nomPersistance =  'carte_persistance.fits'   # File with saturated pixels from previous acquisition
+Treset = 0                                   # Time between current and previous acquisition / [s]
 
 output_dir = 'my_simulation'                 # Output directory
+nomrampe   = 'my_simulation_1'               # Base name for the output file
+
+nomrampe  += '_'+band                        # Add photometric band to base name
+nomrampe  += '_'+str(int(t_rampe//Texp))+"f" # Add number of frames to base name
 configFile = 'CAGIRE_ImSim_config.hjson'     # Configuration file
 
 ########################################################################################################################
@@ -117,7 +118,6 @@ colibri_IS.config['RA'] = ra
 colibri_IS.config['DEC'] = dec
 
 colibri_IS.config['filter_band'] = band
-#colibri_IS.config['PSF']['total']['file'] = 'total_PSF/%s/PSF_total_%s.fits' % (output_dir, band)
 colibri_IS.config['PSF']['total']['file'] = 'total_PSF/PSF_total_%s.fits' % (band)
 colibri_IS.config['exptime'] = Texp
 colibri_IS.config['Nfin'] = Nfin

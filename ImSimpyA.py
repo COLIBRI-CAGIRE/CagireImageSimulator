@@ -6,7 +6,6 @@ version = "1.0"
 import numpy as np
 import matplotlib.pyplot as plt
 import os, sys, datetime, math, shutil, time, gc
-
 import hjson
 import scipy
 import numexpr as ne
@@ -27,7 +26,7 @@ Number of threads to use in parallel.
 	(n_threads = -1) should use all available threads. Expect around 4GB ram usage. Soft-capped around 8 threads, after that the benefits are almost null.
 	(n_threads =  1) should be equivalent to single-core computation. Expect <1GB ram usage.
 """
-n_threads = 8
+n_threads = 4
 
 simu_dir = imp.util.find_spec('ImSimpyA').origin.rstrip('ImSimPyA.py')
 
