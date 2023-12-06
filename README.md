@@ -15,6 +15,11 @@ Parameters include the target coordinates, photometric band, exposure time, whet
 The detector of CAGIRE is read every ~1.33s, hence for a 60s exposure the simulator will generate a ramp of 45 frames.
 
 
+### Ramp with a GRB
+
+A few GRB lightcurves are available in `/GRBs/`. When `addGRB=True` is specified in `simu_b.py`, the coordinates of the GRB will override the input coordinates automatically for the simulation. To produce a realistic image, CAGIRE's field of view is slightly offset from the GRB at a random angular distance.
+
+
 ### Multithreading
 
 Some pieces of the code are parallelized, using a default thread count of 4 (`n_threads=4` in ImSimpyA.py). Use `n_threads=1` to revert back to a single-core execution (less ram usage, longer simulation time), or `n_threads=-1` to use all available threads (more ram usage, faster simulation time). For reference, on an Intel i7 13800H, the single-core generation of a 60s exposure (45 frames) takes 35 seconds. Execution of the code with 4 cores or more takes less than 16 seconds.
@@ -67,4 +72,4 @@ This repository is maintained by [Francis Fortin](mailto:francis.fortin@irap.omp
 
 <img src="https://ffortin-sci-edu.github.io/pictures/IRAP_logo_midres.png" width="10%">
 <img src="https://ffortin-sci-edu.github.io/pictures/CNES_logo_midres.png" width="7%">
-<img src="https://ffortin-sci-edu.github.io/pictures/SVOM_logo.png" width="10%">
+
