@@ -3,12 +3,16 @@
 
 This is the official repository for the COLIBRI/CAGIRE image simulator.
 
+CAGIRE is a near-infrared imager (J, H) that will be mounted on the COLIBRI telescope (San Pedro Martir, Mexico).
+As a part of the ground segment of SVOM, CAGIRE is designed to perform systematic followups of gamma-ray burst afterglows.
 
+
+A complete description of CAGIRE's specifications and performance is available in [Nouvel de la Fleche et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ExA...tmp...39N/abstract).
 
 
 ## Generating a ramp
 
-Modify the parameters in "simu_b.py" according to your needs, and run it.
+Modify the parameters in `simu_b.py` according to your needs, and run it.
 
 Parameters include the target coordinates, photometric band, exposure time, whether or not to simulate a GRB, and output directory/file names.
 
@@ -66,7 +70,7 @@ Works on Ubuntu 20.04 / Python 3.8.
 
 ## Acknowledgements
 
-Thanks to Alix Nouvel de la Fleche for the base version of the CAGIRE simulator. Thanks to David Corre for the ETC on which is based this project (https://github.com/dcorre/pyETC). Thanks to CAGIRE for capturing the GRBs infrared emission.
+Thanks to Alix Nouvel de la Fleche for the base version of the CAGIRE simulator. Thanks to David Corre for the ETC on which is based this project (https://github.com/dcorre/pyETC). Thanks to CAGIRE for (soon) capturing the GRBs infrared emission.
 
 This repository is maintained by [Francis Fortin](mailto:francis.fortin@irap.omp.eu) (IRAP, CNES).
 
