@@ -7,6 +7,7 @@ import os
 warnings.filterwarnings('ignore')
 import math
 import gc
+from GRB_generator import *
 
 path = imp.util.find_spec('ImSimpyA').origin.rstrip("ImSimpyA.py")
 
@@ -20,23 +21,47 @@ moonage=7                                    # Days since new moon              
 band='H'                                     # Photometry band ('J' or 'H' )
 
 Texp=1.331210                                # Frame duration                        / [s], Fixed parameter
-t_rampe =  5 #66.5                           # Ramp duration                         / [s]
+t_rampe =  60                                # Ramp duration                         / [s]
+nFrames = int(t_rampe/Texp)
+
 
 RA_image = 214.477                           # Right Ascension                       / [deg], Not used if addGRB=True
 DEC_image = -45.411                          # Declination                           / [deg], Not used if addGRB=True
 
-AddGRB = False                               # Simulate a GRB ?                      / [bool]
-tdeb_obs = 300                               # Time of observation after burst alert / [s]
-cheminGRB = path+'GRBs/GRB90423_'+band+'.txt'# Path to GRB lightcurve (coordinates and magnitudes with time)
+AddGRB   = True                              # Simulate a GRB ?                      / [bool]
+GRBname  = "GRB050904A"                      # Name of the GRB to simulate
+z        = 12                                # Redshift of the GRB. "default" automatically reverts to the real redshift.
+tdeb_obs = 0.0035                            # No lower than ~0.0035 (5 min, pessimistic GACIRE reaction time) / [d]
+
+if z == "default":
+    with open('./GRBs/GRBs.csv','r') as infile:
+        for line in infile.readlines():
+            data = line.rstrip('\n').split(',')
+            if data[0] == GRBname:
+                cols = data
+    z=float(cols[12])
+                                             # Path to GRB lightcurve (coordinates and magnitudes with time)  
+cheminGRB = path + 'GRBs'+'\
+/'+GRBname+ '\
+/z'+str(z)+ '\
+/'+band+    '\
+/'+GRBname+'_'+band+'_'+str(tdeb_obs)+'T_'+str(nFrames)+'f_'+'z'+str(z)+'.txt' 
 
 nomPersistance =  'carte_persistance.fits'   # File with saturated pixels from previous acquisition
 Treset = 0                                   # Time between current and previous acquisition / [s]
 
 output_dir = 'my_simulation'                 # Output directory
-nomrampe   = 'my_simulation_1'               # Base name for the output file
+nomrampe   = 'GRB050904A'                    # Base name for the output file.
 
 nomrampe  += '_'+band                        # Add photometric band to base name
+if AddGRB:                                   # If GRB simulated, add time since trigger
+    nomrampe += '_'+str(tdeb_obs)+'T'
 nomrampe  += '_'+str(int(t_rampe//Texp))+"f" # Add number of frames to base name
+if AddGRB:                                   # If GRB simulated, add redshift
+    nomrampe += '_z'+str(z)
+
+if AddGRB:
+    print('Observing the GRB '+str(tdeb_obs*24.)+' hrs after trigger.')
 configFile = 'CAGIRE_ImSim_config.hjson'     # Configuration file
 
 ########################################################################################################################
@@ -49,16 +74,20 @@ Nframes=np.arange(0,Nfin,1)
 
 # If GRB is simulated:
 if AddGRB==True :
-    # Begining of observations
-    tdeb_obs=tdeb_obs- Texp
-
     # Fetching GRB data
-    GRB= np.loadtxt(cheminGRB)
+    if  os.path.exists(cheminGRB):
+        GRB= np.loadtxt(cheminGRB)
+        print('Found GRB lightcurve in database.')
+    else:
+        print('GRB lightcurve not found in database.\nGenerating a lightcurve using input parameters.\n')
+        G = GRB(GRBname)
+        G.generateCagireLightCurve(band, z, tdeb_obs, t_rampe)
+        GRB= np.loadtxt(cheminGRB)
     tGRB = GRB[0]
-    idebGRB = np.intersect1d(np.argwhere(tGRB>= tdeb_obs),np.argwhere(tGRB< tdeb_obs+Texp ))
-    Nobs = [int(idebGRB+ x) for x in Nframes]
+    #idebGRB = np.intersect1d(np.argwhere(tGRB>= tdeb_obs),np.argwhere(tGRB< tdeb_obs+Texp ))
+    #Nobs = [int(idebGRB+ x) for x in Nframes]
     magGRB=GRB[1]
-    magGRB=magGRB[Nobs]
+    #magGRB=magGRB[Nobs]
     raGRB = GRB[2,0]
     decGRB = GRB[3,0]
     

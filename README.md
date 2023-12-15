@@ -1,5 +1,5 @@
 
-# <img src="https://ffortin-sci-edu.github.io/pictures/CAGIRE_fake_logo.png" width="20%">  Image Simulator v1.0 
+# <img src="https://ffortin-sci-edu.github.io/pictures/CAGIRE_fake_logo.png" width="20%">  Image Simulator v1.1 
 
 This is the official repository for the COLIBRI/CAGIRE image simulator.
 
@@ -7,7 +7,7 @@ CAGIRE is a near-infrared imager (J, H) that will be mounted on the COLIBRI tele
 As a part of the ground segment of SVOM, CAGIRE is designed to perform systematic followups of gamma-ray burst afterglows.
 
 
-A complete description of CAGIRE's specifications and performance is available in [Nouvel de la Fleche et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ExA...tmp...39N/abstract).
+A complete description of CAGIRE's specifications and performance is available in [Nouvel de la Fleche et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023ExA...tmp...39N/abstract).
 
 
 ## Generating a ramp
@@ -48,7 +48,21 @@ On Ubuntu : `pip install astropy scipy numpy joblib utils`
 
 ## Version history
 
-### v1.0 (current)
+### v1.1 (current)
+
+- Implemented a GRB lightcurve generator `./GRB_generator.py`:
+    - produces a simulated lightcurve on demand if it does not already exist
+    - can specify time of observation after trigger
+    - can specify any other reshift than the real one
+    - if other redshift, corrects for luminosity distance, time dilation and spectral redshift
+    - generated lightcurves are stored in `./GRBs/nameofGRB` in subfolders according to redshift and observation bands
+
+- Added a GRB database to feed the generator `./GRBs/GRBs.csv`
+    - for now contains a small collection of high-redshift GRBs (z > 6)
+
+- All additions above are implemented so that the user only has to modify `simu_b.py` and set the relevant parameters
+
+### v1.0
 
 - Parallelized functions: addObjects, buildFrame, readDetector
 - Outputs are now saved as extended fits
@@ -74,6 +88,5 @@ Thanks to Alix Nouvel de la Fleche for the base version of the CAGIRE simulator.
 
 This repository is maintained by [Francis Fortin](mailto:francis.fortin@irap.omp.eu) (IRAP, CNES).
 
-<img src="https://ffortin-sci-edu.github.io/pictures/IRAP_logo_midres.png" width="10%">
-<img src="https://ffortin-sci-edu.github.io/pictures/CNES_logo_midres.png" width="7%">
+<img src="https://ffortin-sci-edu.github.io/pictures/IRAP_logo_midres.png" width="10%"> <img src="https://ffortin-sci-edu.github.io/pictures/CNES_logo_midres.png" width="7%">
 

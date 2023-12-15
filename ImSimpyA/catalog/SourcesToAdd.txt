@@ -3,4 +3,4 @@
 #   3 MAG              Object magnitude                                           [AB]
 #   4 TYPE             Object type                                                [0=star, 2= variable, others=FITS]
 #   5 ORIENTATION      Objects orientation                                        [deg]
-502.246901 470.101946 10.880046 2 0.000000 
+1036.793346 741.770734 15.911528 2 0.000000 
