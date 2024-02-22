@@ -26,12 +26,13 @@ plt.ion()
 plt.rc('font', **{'family':'serif','serif':['Palatino']})
 plt.rc('text', usetex=True)
 
-TDIT  = 1.331210   # [s]  / Read frequency of CAGIRE
-nuLya = 3.3e15     # [Hz] / Lyman break
+TDIT  = 1.331210                # [s]  / Read frequency of CAGIRE
+nuLyb = co.c.value/91.18e-9     # [Hz] / Lyman break
+nuLya = co.c.value/121.57e-9    # [Hz] / Lyman alpha
 
-nu    = {'H': co.c.value/1.65e-6, 'J': co.c.value/1.25e-6}
-
-d2s   = 24.*3600.
+nu       = {'H': co.c.value/1.63e-6, 'J': co.c.value/1.22e-6} # Central frenquencies of observation bands
+photband = {'H':1e6*co.c.value/np.array([1.630-0.5*.307,1.630+0.5*.307]), 'J':1e6*co.c.value/np.array([1.220-0.5*.213,1.220+0.5*.213])} # Lower and upper limits of observation bands
+d2s      = 24.*3600.
 
 def find_nearest(array, value):
     array = np.asarray(array)
@@ -61,34 +62,17 @@ class GRB:
             self.alpha    = {'1':float(cols[6]), '2':float(cols[7])}
             self.index    = float(cols[9])
             self.redshift = float(cols[12])
-        
 
 
-    def get_lightcurve(self, band, tstart=0.001, ndata=1000):
-        mag0   = self.tobsmag[band]
-        tobs   = self.tobs[band]
-        tbreak = self.tbreak
+    def generateGRBLightCurve(self, band, z2, ti=0.001, tf=1., ndata=100, aLya=-30.,photsample=100):
         
-        ts    = tstart + np.arange(ndata)*TDIT/24./3600.
-        fact1 = (ts/tobs)**self.alpha['1']
         
-        if (True in (ts >= tbreak)):
-            fact2 = (ts/(tbreak))**self.alpha['2']
-            idx = find_nearest(ts, tbreak)
-            mags1 = mag0 - 2.5*np.log10(fact1[:idx])
-            mags2 = mags1[-1] - 2.5*np.log10(fact2[idx:])
-            mags  = np.concatenate((mags1,mags2))
-        else:
-            mags = mag0 - np.log10(fact1)
-        return ts, mags
-    
-    def getLightCurve(self, band, z2, ti=0.001, tf=1., ndata=100, aLya=-30.):
         mag0   = self.tobsmag[band]
         tobs   = self.tobs[band]/24.
         tbreak = self.tbreak
         a1, a2 = self.index, aLya
         b1, b2 = self.alpha['1'], self.alpha['2']
-        nuobs  = nu[band]
+        nuobs = np.linspace(photband[band][0], photband[band][1], photsample)
         
         z1 = self.redshift
         
@@ -104,24 +88,24 @@ class GRB:
         
         ts = np.logspace(np.log10(ti), np.log10(tf), ndata)
         
-        F0z1 = 1./( (tobs/tb1)**-b1 + (tobs/tb1)**-b2 )
-        Fsz1 = 1./( (ts/tb1)**-b1 + (ts/tb1)**-b2 )
-        LCz1 = Fsz1/F0z1
+        magz1 = mag0 -2.5*np.log10(smoothBPL(ts,tb1,-b1,-b2)/smoothBPL(tobs,tb1,-b1,-b2)) #GRB lightcurve in the observed band at z=z1 in observer frame
         
-        F0z2 = 1./( (tobs/tb2)**-b1 + (tobs/tb2)**-b2 )
-        Fsz2 = 1./( (ts/tb2)**-b1 + (ts/tb2)**-b2 )
-        LCz2 = Fsz2/F0z2*((nuobs/nub1)**-a1 + (nuobs/nub1)**-a2)/((nuobs/nub2)**-a1 + (nuobs/nub2)**-a2)
+        mag0rf = mag0 -2.5*np.log10(4.*np.pi*self.lumDist(z1)**2*Z1) #Absolute magnitude of the reference measurement in the restframe of the GRB
+        trf    = tobs/Z1
+        nurf   = nuobs*Z1
 
-        D1   = self.lumDist(z1)
-        D2   = self.lumDist(z2)
-
-        magz1 = mag0  -2.5*np.log10(LCz1)
-        magz2 = magz1 -2.5*np.log10(LCz2/LCz1*(D1*Z1/D2/Z2)**2)
-
+        magrf  = mag0rf -2.5*np.log10(smoothBPL(ts,tb1/Z1,-b1,-b2)/smoothBPL(trf,tb1/Z1,-b1,-b2)) #Lightcurve of the GRB in its restframe (observed band x (1+z1), tbreak / (1+z1))
         
-        return ts, magz2
+        tz2    = tobs/Z2
+        nuz2   = nuobs*Z2
+
+        mag2rf = mag0rf -2.5*np.log10(smoothBPL(tz2,tb1/Z1,-b1,-b2)/smoothBPL(trf,tb1/Z1,-b1,-b2)*np.mean(smoothBPL(nuobs*Z2,nuLya,-a1,-a2)/smoothBPL(nuobs*Z1,nuLya,-a1,-a2)))  #Magnitude of the reference measurement when artificially shifting the GRB to another z=z2
+        
+        magz2  = mag2rf +2.5*np.log10(4.*np.pi*self.lumDist(z2)**2*Z2) -2.5*np.log10(smoothBPL(ts,tb1/Z,-b1,-b2)/smoothBPL(tobs,tb1/Z,-b1,-b2)) #GRB lightcurve in the observed band as if seen at z=z2 in observer frame
+
+        return ts, magz1, magz2
     
-    def generateCagireLightCurve(self, band, z2, ti=0.001, Texp=60., aLya=-30.):
+    def generateGRBLightCurve4CAGIRE(self, band, z2, ti=0.001, Texp=60., aLya=-30.):
         mag0   = self.tobsmag[band]
         tobs   = self.tobs[band]/24.
         tbreak = self.tbreak
@@ -150,41 +134,29 @@ class GRB:
         
         ts = (ti*d2s + np.arange(nFrames)*TDIT)/d2s
         
-        F0z1 = 1./( (tobs/tb1)**-b1 + (tobs/tb1)**-b2 )
-        Fsz1 = 1./( (ts/tb1)**-b1 + (ts/tb1)**-b2 )
-        LCz1 = Fsz1/F0z1
+        magz1 = mag0 -2.5*np.log10(smoothBPL(ts,tb1,-b1,-b2)/smoothBPL(tobs,tb1,-b1,-b2)) #GRB lightcurve in the observed band at z=z1 in observer frame
         
-        F0z2 = 1./( (tobs/tb2)**-b1 + (tobs/tb2)**-b2 )
-        Fsz2 = 1./( (ts/tb2)**-b1 + (ts/tb2)**-b2 )
-        LCz2 = Fsz2/F0z2*((nuobs/nub1)**-a1 + (nuobs/nub1)**-a2)/((nuobs/nub2)**-a1 + (nuobs/nub2)**-a2)
+        mag0rf = mag0 -2.5*np.log10(4.*np.pi*self.lumDist(z1)**2*Z1) #Absolute magnitude of the reference measurement in the restframe of the GRB
+        trf    = tobs/Z1
+        nurf   = nuobs*Z1
 
-        D1   = self.lumDist(z1)
-        D2   = self.lumDist(z2)
-
-        magz1 = mag0  -2.5*np.log10(LCz1)
-        magz2 = magz1 -2.5*np.log10(LCz2/LCz1*(D1*Z1/D2/Z2)**2)
+        magrf  = mag0rf -2.5*np.log10(smoothBPL(ts,tb1/Z1,-b1,-b2)/smoothBPL(trf,tb1/Z1,-b1,-b2)) #Lightcurve of the GRB in its restframe (observed band x (1+z1), tbreak / (1+z1))
         
-        print(str(ti))
-        outfilename = self.name+'_'+band+'_'+str(round(ti,4))+"T_"+str(nFrames)+"f_z"+str(z2)+".txt"
-        outpath     = './GRBs/'+self.name+'/z'+str(z2)+'/'+band+'/'
-        if not os.path.exists(outpath):
-            os.makedirs(outpath)
-            np.savetxt(outpath+outfilename, np.asarray([ts*d2s,magz2,ras,decs]))
-        else:
-            np.savetxt(outpath+outfilename, np.asarray([ts*d2s,magz2,ras,decs]))
+        tz2    = tobs/Z2
+        nuz2   = nuobs*Z2
+
+        mag2rf = mag0rf -2.5*np.log10(smoothBPL(tz2,tb1/Z1,-b1,-b2)/smoothBPL(trf,tb1/Z1,-b1,-b2)*np.mean(smoothBPL(nuobs*Z2,nuLya,-a1,-a2)/smoothBPL(nuobs*Z1,nuLya,-a1,-a2)))  #Magnitude of the reference measurement when artificially shifting the GRB to another z=z2
+        
+        magz2  = mag2rf +2.5*np.log10(4.*np.pi*self.lumDist(z2)**2*Z2) -2.5*np.log10(smoothBPL(ts,tb1/Z,-b1,-b2)/smoothBPL(tobs,tb1/Z,-b1,-b2)) #GRB lightcurve in the observed band as if seen at z=z2 in observer frame
+        path = './GRBs\
+/'+self.name+ '\
+/z'+str(z2)+ '\
+/'+band+    '/'
+        os.makedirs(path, exist_ok=True)
+        np.savetxt(path+self.name+'_'+band+'_'+str(round(ti,4))+"T_"+str(nFrames)+"f_z"+str(z2)+".txt", np.asarray([ts*d2s,magz2,ras,decs]))
         
         return 0
     
-    def export_lightcurve(self, band, tstart=0.001, ndata=1000):
-        ts, mags = self.get_lightcurve(band, tstart, ndata)
-        ras      = np.zeros(ndata)
-        decs     = np.zeros(ndata)
-        ts      *= 24.*3600.
-        
-        ras[0]  = self.ra
-        decs[0] = self.dec
-        
-        np.savetxt('./GRBs/'+self.name+'_'+band+'.txt', np.asarray([ts,mags,ras,decs]))
        
     def lumDist(self, z, H0=72., Om=0.3, Ol=0.7):
         try:
@@ -197,11 +169,33 @@ class GRB:
         
         return  D*1e-3*co.c.value/H0
     
-    def specFluxRatio(self, zp, a, b, H0=72., Om=0.3, Ol=0.7):
-        LD  = self.lumDist(self.redshift, H0, Om, Ol)
-        LDp = self.lumDist(zp, H0, Om, Ol)
-        
-        return (LD/LDp)**2*( (1.+self.redshift)/(1.+zp) )**( 1. - a + b )
     
 def lumDist2bint(z, Om, Ol):
     return 1./np.sqrt(Om*(1+z)**3 + Ol)
+
+def smoothBPL(x, xo, a1, a2, delta=0.01):
+    return (x/xo)**-a1*(0.5*(1+(x/xo)**(1./delta)))**(delta*(a1-a2))
+
+def bkn_pow(xvals,breaks,alphas):
+    try:
+        if len(breaks) != len(alphas) - 1:
+            raise ValueError("Dimensional mismatch. There should be one more alpha than there are breaks.")
+    except TypeError:
+        raise TypeError("Breaks and alphas should be array-like.")
+    if any(breaks < np.min(xvals)) or any(breaks > np.max(xvals)):
+        raise ValueError("One or more break points fall outside given x bounds.")
+    
+    breakpoints = [np.min(xvals)] + breaks + [np.max(xvals)] # create a list of all the bounding x-values
+    chunks = [np.array([x for x in xvals if x >= breakpoints[i] and x <= breakpoints[i+1]]) for i in range(len(breakpoints)-1)]
+    
+    all_y = []
+
+    for idx,xchunk in enumerate(chunks):
+        yvals = xchunk**alphas[idx]
+        all_y.append(yvals) # add this piece to the output
+    
+    for i in range(1,len(all_y)):
+        all_y[i] *= np.abs(all_y[i-1][-1]/all_y[i][0]) # scale the beginning of each piece to the end of the last so it is continuous
+    
+    return(np.array([y for ychunk in all_y for y in ychunk])) # return flattened list
+

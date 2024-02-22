@@ -8,6 +8,9 @@ warnings.filterwarnings('ignore')
 import math
 import gc
 from GRB_generator import *
+from astropy import coordinates as coord
+from astropy import units as u
+from astropy.wcs.wcs import WCS
 
 path = imp.util.find_spec('ImSimpyA').origin.rstrip("ImSimpyA.py")
 
@@ -18,20 +21,32 @@ start = time.perf_counter()
 ########################################################################################################################
 seeing=1                                     # Local seeing                         / [arcsec]
 moonage=7                                    # Days since new moon                  / [d]
-band='H'                                     # Photometry band ('J' or 'H' )
+band='J'                                     # Photometry band ('J' or 'H' )
 
 Texp=1.331210                                # Frame duration                        / [s], Fixed parameter
-t_rampe =  60                                # Ramp duration                         / [s]
+t_rampe = 60                                 # Ramp duration                         / [s]
 nFrames = int(t_rampe/Texp)
 
 
-RA_image = 214.477                           # Right Ascension                       / [deg], Not used if addGRB=True
-DEC_image = -45.411                          # Declination                           / [deg], Not used if addGRB=True
+RA_image = 56.871249                           # Right Ascension                       / [deg], Not used if addGRB=True
+DEC_image = 24.1075                         # Declination                           / [deg], Not used if addGRB=True
+
 
 AddGRB   = True                              # Simulate a GRB ?                      / [bool]
 GRBname  = "GRB050904A"                      # Name of the GRB to simulate
-z        = 12                                # Redshift of the GRB. "default" automatically reverts to the real redshift.
-tdeb_obs = 0.0035                            # No lower than ~0.0035 (5 min, pessimistic GACIRE reaction time) / [d]
+z        = 8                                 # Redshift of the GRB. "default" automatically reverts to the real redshift.
+tdeb_obs = 0.1279                            # Time of observation after trigger     / [d]
+
+output_dir = 'my_simulation'                 # Output directory
+nomrampe   = 'GRB050904A_initial'                      # Base name for the output file.
+
+configFile = 'CAGIRE_ImSim_config.hjson'     # Configuration file
+
+nomPersistance =  'carte_persistance.fits'   # File with saturated pixels from previous acquisition
+
+Treset = 0                                   # Time between current and previous acquisition / [s]
+
+########################################################################################################################
 
 if z == "default":
     with open('./GRBs/GRBs.csv','r') as infile:
@@ -47,11 +62,7 @@ cheminGRB = path + 'GRBs'+'\
 /'+band+    '\
 /'+GRBname+'_'+band+'_'+str(tdeb_obs)+'T_'+str(nFrames)+'f_'+'z'+str(z)+'.txt' 
 
-nomPersistance =  'carte_persistance.fits'   # File with saturated pixels from previous acquisition
-Treset = 0                                   # Time between current and previous acquisition / [s]
 
-output_dir = 'my_simulation'                 # Output directory
-nomrampe   = 'GRB050904A'                    # Base name for the output file.
 
 nomrampe  += '_'+band                        # Add photometric band to base name
 if AddGRB:                                   # If GRB simulated, add time since trigger
@@ -62,7 +73,7 @@ if AddGRB:                                   # If GRB simulated, add redshift
 
 if AddGRB:
     print('Observing the GRB '+str(tdeb_obs*24.)+' hrs after trigger.')
-configFile = 'CAGIRE_ImSim_config.hjson'     # Configuration file
+
 
 ########################################################################################################################
 ########################################################################################################################
@@ -81,7 +92,7 @@ if AddGRB==True :
     else:
         print('GRB lightcurve not found in database.\nGenerating a lightcurve using input parameters.\n')
         G = GRB(GRBname)
-        G.generateCagireLightCurve(band, z, tdeb_obs, t_rampe)
+        G.generateGRBLightCurve4CAGIRE(band, z, tdeb_obs, t_rampe)
         GRB= np.loadtxt(cheminGRB)
     tGRB = GRB[0]
     #idebGRB = np.intersect1d(np.argwhere(tGRB>= tdeb_obs),np.argwhere(tGRB< tdeb_obs+Texp ))
@@ -99,6 +110,7 @@ if AddGRB==True :
         dist = np.arccos(np.sin(decGRB)*np.sin(decGRB+DDEC)+np.cos(decGRB)*np.cos(decGRB+DDEC)*np.cos(DRA))
     RA_image= raGRB+DRA
     DEC_image= decGRB+DDEC
+    
     print("Generated GRB located at ",raGRB,decGRB)
     print("GRB located at a radius of ",round(dist*60.,1)," arcmin away from center.\n")
 
@@ -156,6 +168,12 @@ colibri_IS.config['output'] = output_dir + "/"+ nomrampe + '.fits'
 
 # Run the Image Simulator
 colibri_IS.simulate('data')
+
+c = coord.SkyCoord(colibri_IS.config['SourcesToAdd']['gen']['RA'], colibri_IS.config['SourcesToAdd']['gen']['DEC'], unit=(u.deg, u.deg),frame='icrs')
+w = WCS(colibri_IS.hdu_header)
+world = np.array([[c.ra.deg, c.dec.deg]])
+pix = w.all_world2pix(world, 1)
+print("\n GRB located at pixels [",int(pix[0][0]),int(pix[0][1]),"]\n")
 
 del colibri_IS
 gc.collect()

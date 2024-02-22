@@ -16,6 +16,9 @@ from astropy.io import fits
 from collections import OrderedDict
 from joblib import Parallel, delayed
 from utils import PSFUtils
+from astropy import coordinates as coord
+from astropy import units as u
+from astropy.wcs.wcs import WCS
 
 parameters = {'axes.labelsize': 18, 'axes.titlesize': 20, 'xtick.labelsize': 18, 'ytick.labelsize': 18}
 plt.rcParams.update(parameters)
@@ -696,7 +699,6 @@ class ImageSimulator_UTR():
 
             from utils.createCatalogue import CreateObject
             CreateObject(RA, DEC, MAG, 2, self.hdu_header, radius, output=output)
-            #print(MAG)
             object = np.loadtxt(output)
             object = object[np.newaxis, :]
 
@@ -747,6 +749,7 @@ class ImageSimulator_UTR():
                 grb_coord_pix = pix[0]
             self.config['grb_coords_pix_X'] = grb_coord_pix[1]
             self.config['grb_coords_pix_Y'] = grb_coord_pix[0]
+            
             self.objects = np.vstack(
                 (self.objects, [grb_coord_pix[0], grb_coord_pix[1], self.config['grb_mag'], 1000, 0]))
             # Add GRB to the object list as a point source
@@ -1627,6 +1630,8 @@ class ImageSimulator_UTR():
         
         if self.AddGRB:
             print("Adding GRB to frames... ", end="\r")
+            
+            
             for k in nf:
                 A = np.copy(self.image)
                 self.image = np.zeros((self.information['ysize'], self.information['xsize']), dtype=np.float64)

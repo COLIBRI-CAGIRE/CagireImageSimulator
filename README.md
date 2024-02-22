@@ -62,6 +62,8 @@ On Ubuntu : `pip install astropy scipy numpy joblib utils`
 
 - All additions above are implemented so that the user only has to modify `simu_b.py` and set the relevant parameters
 
+Works on Ubuntu 22.04 / Python 3.10.
+
 ### v1.0
 
 - Parallelized functions: addObjects, buildFrame, readDetector
